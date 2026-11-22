@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>習慣累計與月度視覺總結</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #f7f7f7;
+      --border: #e2e2e2;
+      --text: #111111;
+      --muted: #666666;
+      --accent: #000000;
+      --accent-text: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 20px 16px 60px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    header .date-badge {
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 新增專案區塊 */
+    .add-box {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .add-box input {
+      flex: 1;
+      padding: 12px 14px;
+      font-size: 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .add-box input:focus {
+      border-color: var(--accent);
+      background: #fff;
+    }
+
+    .add-box button {
+      padding: 0 18px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      background: var(--accent);
+      color: var(--accent-text);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .add-box button:active {
+      opacity: 0.8;
+    }
+
+    /* 專案列表 */
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .habit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .habit-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      transition: transform 0.1s;
+    }
+
+    .habit-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .habit-name {
+      font-size: 1.08rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .habit-meta {
+      font-size: 0.82rem;
+      color: var(--muted);
+      display: flex;
+      gap: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .habit-meta strong {
+      color: var(--text);
+    }
+
+    .habit-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-done {
+      background: var(--accent);
+      color: var(--accent-text);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .btn-done:active {
+      transform: scale(0.96);
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    /* 每月視覺化總結區 */
+    .summary-card {
+      border: 1.5px solid var(--accent);
+      border-radius: 16px;
+      padding: 20px 16px;
+      background: #fff;
+      margin-bottom: 24px;
+    }
+
+    .month-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .month-nav h2 {
+      font-size: 1.1rem;
+      font-weight: 800;
+    }
+
+    .month-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .month-btns button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .kpi-box {
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 12px 10px;
+      text-align: center;
+    }
+
+    .kpi-num {
+      font-size: 1.45rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.2;
+    }
+
+    .kpi-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* 視覺化一：每月熱力方塊圖 */
+    .visual-block {
+      margin-bottom: 22px;
+    }
+
+    .visual-block:last-child {
+      margin-bottom: 0;
+    }
+
+    .visual-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .legend span {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      border: 1px solid #ddd;
+    }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .day-cell {
+      aspect-ratio: 1;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      position: relative;
+      background: #fafafa;
+      color: #999;
+    }
+
+    .day-cell.empty {
+      border: none;
+      background: transparent;
+    }
+
+    .day-cell.lvl-1 {
+      background: #d4d4d4;
+      color: #111;
+      border-color: #bcbcbc;
+    }
+
+    .day-cell.lvl-2 {
+      background: #737373;
+      color: #fff;
+      border-color: #525252;
+    }
+
+    .day-cell.lvl-3 {
+      background: #111111;
+      color: #fff;
+      border-color: #000;
+    }
+
+    .day-cell.today {
+      outline: 2px solid #000;
+      outline-offset: 1px;
+    }
+
+    /* 視覺化二：各專案完成度橫向長條圖 */
+    .bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .bar-item-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 12px;
+      background: var(--surface);
+      border-radius: 99px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 99px;
+      transition: width 0.35s ease;
+    }
+
+    /* 彈出累計視窗 (Modal) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+      backdrop-filter: blur(2px);
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #fff;
+      border: 2px solid #000;
+      border-radius: 18px;
+      padding: 26px 22px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-badge {
+      display: inline-block;
+      background: #000;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 99px;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .modal-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 18px;
+    }
+
+    .modal-stat-val {
+      font-size: 1.8rem;
+      font-weight: 900;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .modal-stat-lbl {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .modal-close {
+      width: 100%;
+      padding: 12px;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* 底部跨裝置備份區 */
+    .sync-footer {
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .sync-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .sync-btns button {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>日常專案累計器</h1>
+    <div class="date-badge" id="todayText"></div>
+  </header>
+
+  <!-- 新增自訂專案 -->
+  <div class="add-box">
+    <input type="text" id="newHabitInput" placeholder="輸入新專案（例如：閱讀 15 分鐘）..." maxlength="30" />
+    <button onclick="addHabit()">＋ 新增</button>
+  </div>
+
+  <!-- 專案列表 -->
+  <div class="section-title">
+    <span>我的打卡專案</span>
+    <span id="habitCountText"></span>
+  </div>
+  <div class="habit-list" id="habitList"></div>
+
+  <!-- 每月視覺化總結 -->
+  <div class="summary-card">
+    <div class="month-nav">
+      <h2 id="currentMonthLabel">2026年 11月 視覺總結</h2>
+      <div class="month-btns">
+        <button onclick="changeMonth(-1)">◀ 上個月</button>
+        <button onclick="changeMonth(1)">下個月 ▶</button>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-box">
+        <div class="kpi-num" id="kpiTotalMonth">0</div>
+        <div class="kpi-label">本月總完成次數</div>
+      </div>
+      <div class="kpi-box">
+        <div class="kpi-num" id="kpiActiveDays">0</div>
+        <div class="kpi-label">本月行動天數</div>
+      </div>
+      <div class="kpi-box">
+        <div class="kpi-num" id="kpiAllTime">0</div>
+        <div class="kpi-label">歷史總累計次數</div>
+      </div>
+    </div>
+
+    <!-- 視覺化 1：月度每日熱力圖 -->
+    <div class="visual-block">
+      <div class="visual-title">
+        <span>每日執行熱力圖</span>
+        <div class="legend">
+          少 <span style="background:#fafafa"></span>
+          <span style="background:#d4d4d4"></span>
+          <span style="background:#737373"></span>
+          <span style="background:#111111"></span> 多
+        </div>
+      </div>
+      <div class="heatmap-grid" id="heatmapGrid"></div>
+    </div>
+
+    <!-- 視覺化 2：各專案月度長條對比 -->
+    <div class="visual-block">
+      <div class="visual-title">
+        <span>各專案本月完成分佈</span>
+      </div>
+      <div class="bar-list" id="barList"></div>
+    </div>
+  </div>
+
+  <!-- 跨裝置同步備份 -->
+  <div class="sync-footer">
+    <span>手機 ↔ 電腦進度搬移</span>
+    <div class="sync-btns">
+      <button onclick="exportData()">複製進度代碼</button>
+      <button onclick="importData()">貼上還原進度</button>
+    </div>
+  </div>
+
+  <!-- 點擊完成後的彈出累計視窗 -->
+  <div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-badge">✓ 打卡成功</div>
+      <div class="modal-title" id="modalHabitName">早上運動 10 分鐘</div>
+      <div class="modal-stats">
+        <div>
+          <div class="modal-stat-val" id="modalMonthCount">1</div>
+          <div class="modal-stat-lbl">本月累計完成 (次)</div>
+        </div>
+        <div>
+          <div class="modal-stat-val" id="modalTotalCount">1</div>
+          <div class="modal-stat-lbl">歷史總累計 (次)</div>
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">太棒了，繼續保持</button>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'habit_tracker_v1_data';
+
+    // 預設資料（包含你提到的兩個專案）
+    const defaultData = {
+      habits: [
+        { id: 'h1', name: '早上運動 10 分鐘' },
+        { id: 'h2', name: '練習英文' }
+      ],
+      // logs 格式: { "YYYY-MM-DD": { "h1": 1, "h2": 2 } }
+      logs: {}
+    };
+
+    let state = loadState();
+    let viewDate = new Date(); // 目前視覺總結檢視的月份
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(defaultData));
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getTodayStr() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getMonthPrefix(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      return `${y}-${m}`;
+    }
+
+    // 計算某專案的「歷史總次數」與「指定月份次數」
+    function getHabitCounts(habitId, monthPrefix) {
+      let total = 0;
+      let month = 0;
+      for (const [dateStr, dayObj] of Object.entries(state.logs)) {
+        const c = dayObj[habitId] || 0;
+        total += c;
+        if (dateStr.startsWith(monthPrefix)) {
+          month += c;
+        }
+      }
+      return { total, month };
+    }
+
+    // 新增專案
+    function addHabit() {
+      const input = document.getElementById('newHabitInput');
+      const name = input.value.trim();
+      if (!name) return;
+      const id = 'h_' + Date.now();
+      state.habits.push({ id, name });
+      input.value = '';
+      saveState();
+      renderAll();
+    }
+
+    // 支援按 Enter 新增
+    document.getElementById('newHabitInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') addHabit();
+    });
+
+    // 刪除專案
+    function deleteHabit(id) {
+      const habit = state.habits.find(h => h.id === id);
+      if (!habit) return;
+      if (!confirm(`確定要刪除「${habit.name}」嗎？（歷史次數紀錄仍會保留在總計中）`)) return;
+      state.habits = state.habits.filter(h => h.id !== id);
+      saveState();
+      renderAll();
+    }
+
+    // 點擊完成一次 -> 寫入紀錄並彈出累計視窗
+    function completeHabit(id) {
+      const habit = state.habits.find(h => h.id === id);
+      if (!habit) return;
+
+      const today = getTodayStr();
+      if (!state.logs[today]) state.logs[today] = {};
+      state.logs[today][id] = (state.logs[today][id] || 0) + 1;
+
+      saveState();
+      renderAll();
+
+      // 計算最新累計並顯示彈窗
+      const thisMonthPrefix = getMonthPrefix(new Date());
+      const counts = getHabitCounts(id, thisMonthPrefix);
+
+      document.getElementById('modalHabitName').textContent = habit.name;
+      document.getElementById('modalMonthCount').textContent = counts.month;
+      document.getElementById('modalTotalCount').textContent = counts.total;
+      document.getElementById('modalBackdrop').classList.add('active');
+    }
+
+    // 復原今天誤按的 1 次
+    function undoToday(id) {
+      const today = getTodayStr();
+      if (state.logs[today] && state.logs[today][id] > 0) {
+        state.logs[today][id] -= 1;
+        if (state.logs[today][id] === 0) delete state.logs[today][id];
+        if (Object.keys(state.logs[today]).length === 0) delete state.logs[today];
+        saveState();
+        renderAll();
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('modalBackdrop').classList.remove('active');
+    }
+
+    function changeMonth(delta) {
+      viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + delta, 1);
+      renderSummary();
+    }
+
+    function renderHabits() {
+      const listEl = document.getElementById('habitList');
+      const today = getTodayStr();
+      const thisMonthPrefix = getMonthPrefix(new Date());
+
+      document.getElementById('habitCountText').textContent = `共 ${state.habits.length} 項`;
+
+      if (state.habits.length === 0) {
+        listEl.innerHTML = `<div style="text-align:center;color:#888;padding:24px;border:1px dashed #ccc;border-radius:12px;">目前沒有專案，請從上方新增一個開始吧！</div>`;
+        return;
+      }
+
+      listEl.innerHTML = state.habits.map(h => {
+        const counts = getHabitCounts(h.id, thisMonthPrefix);
+        const todayCount = (state.logs[today] && state.logs[today][h.id]) || 0;
+
+        return `
+          <div class="habit-card">
+            <div class="habit-info">
+              <div class="habit-name">${escapeHtml(h.name)}</div>
+              <div class="habit-meta">
+                <span>今日：<strong>${todayCount}</strong> 次</span>
+                <span>本月：<strong>${counts.month}</strong> 次</span>
+                <span>總累計：<strong>${counts.total}</strong> 次</span>
+              </div>
+            </div>
+            <div class="habit-actions">
+              ${todayCount > 0 ? `<button class="btn-icon" title="扣回今天1次" onclick="undoToday('${h.id}')">-1</button>` : ''}
+              <button class="btn-done" onclick="completeHabit('${h.id}')">✓ 完成</button>
+              <button class="btn-icon" title="刪除專案" onclick="deleteHabit('${h.id}')">✕</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderSummary() {
+      const year = viewDate.getFullYear();
+      const month = viewDate.getMonth();
+      const monthPrefix = getMonthPrefix(viewDate);
+      const todayStr = getTodayStr();
+
+      document.getElementById('currentMonthLabel').textContent = `${year}年 ${month + 1}月 視覺總結`;
+
+      // 統計 KPI
+      let monthTotal = 0;
+      let activeDays = 0;
+      let allTimeTotal = 0;
+
+      for (const [dateStr, dayObj] of Object.entries(state.logs)) {
+        const daySum = Object.values(dayObj).reduce((a, b) => a + b, 0);
+        allTimeTotal += daySum;
+        if (dateStr.startsWith(monthPrefix) && daySum > 0) {
+          monthTotal += daySum;
+          activeDays += 1;
+        }
+      }
+
+      document.getElementById('kpiTotalMonth').textContent = monthTotal;
+      document.getElementById('kpiActiveDays').textContent = activeDays;
+      document.getElementById('kpiAllTime').textContent = allTimeTotal;
+
+      // 1. 繪製當月每日熱力方塊圖
+      const heatmapEl = document.getElementById('heatmapGrid');
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const firstDayWeek = new Date(year, month, 1).getDay(); // 0(日)~6(六)
+
+      let cellsHtml = '';
+      for (let i = 0; i < firstDayWeek; i++) {
+        cellsHtml += `<div class="day-cell empty"></div>`;
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dStr = `${monthPrefix}-${String(d).padStart(2, '0')}`;
+        const dayObj = state.logs[dStr] || {};
+        const sum = Object.values(dayObj).reduce((a, b) => a + b, 0);
+
+        let lvlClass = '';
+        if (sum === 1) lvlClass = 'lvl-1';
+        else if (sum === 2) lvlClass = 'lvl-2';
+        else if (sum >= 3) lvlClass = 'lvl-3';
+
+        const isToday = dStr === todayStr ? 'today' : '';
+        cellsHtml += `
+          <div class="day-cell ${lvlClass} ${isToday}" title="${dStr}：完成 ${sum} 次">
+            <span>${d}</span>
+          </div>
+        `;
+      }
+      heatmapEl.innerHTML = cellsHtml;
+
+      // 2. 繪製各專案本月橫向長條圖
+      const barListEl = document.getElementById('barList');
+      if (state.habits.length === 0) {
+        barListEl.innerHTML = `<div style="font-size:0.85rem;color:#888;">尚無專案可顯示圖表</div>`;
+        return;
+      }
+
+      const habitStats = state.habits.map(h => ({
+        name: h.name,
+        count: getHabitCounts(h.id, monthPrefix).month
+      }));
+
+      const maxCount = Math.max(...habitStats.map(s => s.count), 1);
+
+      barListEl.innerHTML = habitStats.map(s => {
+        const pct = s.count === 0 ? 0 : Math.round((s.count / maxCount) * 100);
+        return `
+          <div>
+            <div class="bar-item-head">
+              <span>${escapeHtml(s.name)}</span>
+              <span>${s.count} 次</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 匯出與匯入進度代碼（方便在公司電腦與家裡 iPhone 之間轉移資料）
+    function exportData() {
+      const code = btoa(encodeURIComponent(JSON.stringify(state)));
+      navigator.clipboard.writeText(code).then(() => {
+        alert('進度代碼已複製到剪貼簿！\n你可以貼到 LINE 個人群組或備忘錄，在另一台裝置按「貼上還原進度」即可同步。');
+      }).catch(() => {
+        prompt('請手動複製下方進度代碼：', code);
+      });
+    }
+
+    function importData() {
+      const code = prompt('請貼上先前複製的進度代碼：');
+      if (!code) return;
+      try {
+        const parsed = JSON.parse(decodeURIComponent(atob(code.trim())));
+        if (parsed && Array.isArray(parsed.habits) && typeof parsed.logs === 'object') {
+          state = parsed;
+          saveState();
+          renderAll();
+          alert('進度已成功還原！');
+        } else {
+          alert('代碼格式不正確，請確認是否完整複製。');
+        }
+      } catch (e) {
+        alert('解析失敗，請確認貼上的代碼沒有遺漏字元。');
+      }
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    function renderAll() {
+      const d = new Date();
+      const weekNames = ['日', '一', '二', '三', '四', '五', '六'];
+      document.getElementById('todayText').textContent =
+        `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} (週${weekNames[d.getDay()]})`;
+      renderHabits();
+      renderSummary();
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>
